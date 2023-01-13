@@ -4,11 +4,17 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.wordsapp.data.SettingsDataStore
 import com.example.wordsapp.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Main Activity and entry point for the app. Displays a RecyclerView of letters.
@@ -17,6 +23,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
 
     private var isLinearLayoutManager = true
+
+    private lateinit var SettingsDataStore: SettingsDataStore
+
 
 
 
@@ -27,8 +36,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         recyclerView = binding.recyclerView
-        // Sets the LinearLayoutManager of the recyclerview
-        chooseLayout()
+
+        SettingsDataStore = SettingsDataStore(this@MainActivity)
+
+        SettingsDataStore.preferenceFlow.asLiveData().observe(this, { value ->
+            isLinearLayoutManager = value
+            chooseLayout()
+        })
+
 
     }
 
@@ -65,7 +80,6 @@ class MainActivity : AppCompatActivity() {
         val layoutButton = menu?.findItem(R.id.action_switch_layout)
         // Calls code to set the icon based on the LinearLayoutManager of the RecyclerView
         setIcon(layoutButton)
-
         return true
     }
 
@@ -78,6 +92,11 @@ class MainActivity : AppCompatActivity() {
                 // Sets layout and icon
                 chooseLayout()
                 setIcon(item)
+
+                lifecycleScope.launch{
+                    SettingsDataStore.saveLayoutToPreferencesStore(isLinearLayoutManager, this@MainActivity)
+                }
+
 
                 return true
             }
