@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
@@ -13,7 +12,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.wordsapp.data.SettingsDataStore
 import com.example.wordsapp.databinding.ActivityMainBinding
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 /**
@@ -27,8 +25,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var SettingsDataStore: SettingsDataStore
 
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -37,8 +33,10 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView = binding.recyclerView
 
+        //Accessing the datastore instance
         SettingsDataStore = SettingsDataStore(this@MainActivity)
 
+        //Observing the flow<boolean> as a live<boolean> and update the islinearlayoutmanager
         SettingsDataStore.preferenceFlow.asLiveData().observe(this, { value ->
             isLinearLayoutManager = value
             chooseLayout()
@@ -48,10 +46,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun chooseLayout() {
-        if(isLinearLayoutManager) {
-            recyclerView.layoutManager= LinearLayoutManager(this)
+        if (isLinearLayoutManager) {
+            recyclerView.layoutManager = LinearLayoutManager(this)
         } else {
-            recyclerView.layoutManager = GridLayoutManager(this,4)
+            recyclerView.layoutManager = GridLayoutManager(this, 4)
         }
         recyclerView.adapter = LetterAdapter()
     }
@@ -93,8 +91,13 @@ class MainActivity : AppCompatActivity() {
                 chooseLayout()
                 setIcon(item)
 
-                lifecycleScope.launch{
-                    SettingsDataStore.saveLayoutToPreferencesStore(isLinearLayoutManager, this@MainActivity)
+                //Involves writing to the memory and resource intensive task and suspend fun so
+                //Using the lifecycle scope coroutine fun.
+                lifecycleScope.launch {
+                    SettingsDataStore.saveLayoutToPreferencesStore(
+                        isLinearLayoutManager,
+                        this@MainActivity
+                    )
                 }
 
 
@@ -108,7 +111,6 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 
 
 }
